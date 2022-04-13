@@ -86,6 +86,7 @@ body {
 }
 
 .results-array {
+	max-width: 700px;
 	display: block;
 	margin: 10px 0px;
 }
