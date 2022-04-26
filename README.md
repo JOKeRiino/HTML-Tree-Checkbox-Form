@@ -2,4 +2,4 @@ Simple vanilla JavaScript example for an input form, consisting of multiple chec
 Can be used with a submit button or with automatic selection on changes. 
 
 
-![tree_selector_preview](https://user-images.githubusercontent.com/72083489/165262041-ebc05200-eb8e-4c4e-94b5-e214b7202169.gif)
+![tree_selector_preview](https://user-images.githubusercontent.com/72083489/165264225-28575222-0f29-459c-8057-fabbc4823337.gif)
