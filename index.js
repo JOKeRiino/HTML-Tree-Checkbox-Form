@@ -4,12 +4,13 @@ const entryPoint = document.getElementById('dfgSelectorEntry');
 const selectionResultEntry = document.getElementById('selection-result');
 const form = document.getElementById('dfg-form');
 
+// Building the HTML structure from the given data object
 dfgOptions.forEach((sience, index) => {
 	let sienceHeader = document.createElement("div");
 	let sienceDiv = document.createElement("div");
 
 	// <div class="sience" id="s1">Wissenschaft</div>
-	sienceHeader.innerText = `▷ ${sience.sienceTitle}`;
+	sienceHeader.innerText = `▶︎ ${sience.sienceTitle}`;
 	sienceHeader.classList.add("sience");
 	sienceHeader.id = `s${index + 1}`;
 
@@ -20,8 +21,12 @@ dfgOptions.forEach((sience, index) => {
 
 	sience.boards.forEach(board => {
 		// <div class="first-layer">
+		//		<div class="first-layer-flex"></div>
+		// </div>
 		let firstLayerDiv = document.createElement("div");
 		firstLayerDiv.classList.add("first-layer");
+		let firstLayerFlexDiv = document.createElement("div");
+		firstLayerFlexDiv.classList.add("first-layer-flex");
 
 		// <button type="button" class="expand-btn" id="p1-expand">▷</button>
 		// <input type="checkbox" id="p1" value="1">
@@ -33,7 +38,7 @@ dfgOptions.forEach((sience, index) => {
 		boardExpandButton.type = "button";
 		boardExpandButton.classList.add("expand-btn");
 		boardExpandButton.id = `${board.value}-expand`;
-		boardExpandButton.innerText = "▷";
+		boardExpandButton.innerText = "▶︎";
 
 		boardInput.type = "checkbox";
 		boardInput.id = `${board.value}`;
@@ -73,9 +78,11 @@ dfgOptions.forEach((sience, index) => {
 			secondLayerDiv.appendChild(selectionDiv);
 		})
 
-		firstLayerDiv.appendChild(boardExpandButton);
-		firstLayerDiv.appendChild(boardInput);
-		firstLayerDiv.appendChild(boardInputLabel);
+		firstLayerFlexDiv.appendChild(boardExpandButton);
+		firstLayerFlexDiv.appendChild(boardInput);
+		firstLayerFlexDiv.appendChild(boardInputLabel);
+
+		firstLayerDiv.appendChild(firstLayerFlexDiv);
 		firstLayerDiv.appendChild(secondLayerDiv);
 
 		sienceDiv.appendChild(firstLayerDiv);
@@ -92,9 +99,16 @@ const expandButtons = document.querySelectorAll(".expand-btn");
 const targetDivs = document.querySelectorAll(".second-layer");
 const sienceButtons = document.querySelectorAll(".sience");
 const sienceDivs = document.querySelectorAll(".sience-div");
+const parentCheckboxes = []
+checkboxes.forEach(cb => {
+	if (cb.id.length === 3) {
+		parentCheckboxes.push(cb)
+	}
+})
 
 checkboxes.forEach(checkbox => {
 	checkbox.addEventListener('change', () => {
+		// If a parent is selected, select all its children
 		if (checkbox.id.length === 3 && checkbox.checked) {
 			checkboxes.forEach(cb => {
 				if (cb.id.includes(checkbox.id)) {
@@ -102,6 +116,7 @@ checkboxes.forEach(checkbox => {
 				}
 			})
 		}
+		// If parent is deselected, deselect all its children
 		else if (checkbox.id.length === 3 && !checkbox.checked) {
 			checkboxes.forEach(cb => {
 				if (cb.id.includes(checkbox.id)) {
@@ -109,57 +124,109 @@ checkboxes.forEach(checkbox => {
 				}
 			})
 		}
+		// If all checkboxes but one of a child are selected, deselect the parent if it is selected
+		checkboxes.forEach(cb => {
+			if (cb.id.length > 3 && !cb.checked) {
+				parentCheckboxes.forEach(parent => {
+					if (parent.id === cb.id.substring(0, 3) && parent.checked) {
+						parent.checked = false;
+					}
+				})
+			}
+		})
+		// Get the highest order checkbox id (first three digits of id)
+		const highOrderId = checkbox.id.substring(0, 3)
+		// find all children of the highOrderId Checkbox
+		const lowerOrderCheckboxes = Array.from(checkboxes).filter(cb => cb.id.includes(highOrderId) && cb.id.length > 3);
+		// If there are no unchecked children make sure the parent is also checked
+		if (!lowerOrderCheckboxes.find(cb => {
+			return !cb.checked
+		})) {
+			parentCheckboxes.forEach(pCb => {
+				if (pCb.id === highOrderId) {
+					pCb.checked = true;
+				}
+			})
+		}
+		renderSelection();
 	})
 });
 
+// open or close the nested, second-layer options
 expandButtons.forEach((btn) => {
 	btn.addEventListener('click', () => {
 		targetDivs.forEach((div) => {
 			if (div.id.startsWith(btn.id)) {
 				if (div.classList.contains('no-display')) {
 					div.classList.remove('no-display');
-					btn.textContent = '▽';
+					btn.textContent = '▼';
 				}
 				else {
 					div.classList.add('no-display');
-					btn.textContent = '▷';
+					btn.textContent = '▶︎';
 				}
 			}
 		})
 	})
 });
 
+// open or close the first-layer options
 sienceButtons.forEach(btn => {
 	btn.addEventListener('click', () => {
 		sienceDivs.forEach(div => {
 			if (div.id.startsWith(btn.id)) {
 				if (div.classList.contains('no-display')) {
 					div.classList.remove('no-display');
-					btn.textContent = `▽ ${btn.textContent.split(' ')[1]}`;
+					btn.textContent = `▼ ${btn.textContent.split(' ')[1]}`;
 				}
 				else {
 					div.classList.add('no-display');
-					btn.textContent = `▷ ${btn.textContent.split(' ')[1]}`;
+					btn.textContent = `▶︎ ${btn.textContent.split(' ')[1]}`;
 				}
 			}
 		})
 	})
 })
 
-form.addEventListener('submit', event => {
-	event.preventDefault();
-
+//* Automated Submit on Change
+const renderSelection = () => {
 	const result = [];
 	checkboxes.forEach(cb => {
 		if (cb.checked && cb.id.length > 3) {
 			result.push(cb.id);
 		}
 	})
-	console.log(result);
 
-	const resultSpan = document.createElement("span");
-	resultSpan.classList.add("results-array");
-	resultSpan.innerText = result.length ? `Selection: ${result}` : '';
+	let resultGrid = document.createElement("div");
+	resultGrid.classList.add("results-grid");
+	if (result.length) {
+		result.forEach(resText => {
+			let resultSpan = document.createElement("span");
+			resultSpan.classList.add("result-span");
+			resultSpan.innerText = resText;
+			resultGrid.appendChild(resultSpan);
+		})
+		selectionResultEntry.replaceChildren(resultGrid);
+	} else {
+		selectionResultEntry.innerText = "Please select something!";
+	}
+}
 
-	selectionResultEntry.replaceChildren(resultSpan);
-})
+//* When a submit button is used:
+//* On submit, paint selected values on screen.
+// form.addEventListener('submit', event => {
+// 	event.preventDefault();
+
+// 	const result = [];
+// 	checkboxes.forEach(cb => {
+// 		if (cb.checked && cb.id.length > 3) {
+// 			result.push(cb.id);
+// 		}
+// 	})
+
+// 	const resultSpan = document.createElement("span");
+// 	resultSpan.classList.add("results-array");
+// 	resultSpan.innerText = result.length ? `Selection: ${result}` : '';
+
+// 	selectionResultEntry.replaceChildren(resultSpan);
+// })
